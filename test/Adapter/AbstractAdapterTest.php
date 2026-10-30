@@ -21,13 +21,13 @@ class AbstractAdapterTest extends TestCase
      */
     protected $adapter;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->adapter = new ConsoleAdapter();
         $this->adapter->stream = fopen('php://memory', 'w+');
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         fclose($this->adapter->stream);
     }
@@ -132,17 +132,17 @@ class AbstractAdapterTest extends TestCase
         $this->assertEquals($text, $encodedText);
 
         //Console UTF8 - Text not utf8
-        $encodedText = $this->adapter->encodeText(utf8_decode($text));
+        $encodedText = $this->adapter->encodeText(mb_convert_encoding($text, 'ISO-8859-1', 'UTF-8'));
         $this->assertEquals($text, $encodedText);
 
         //Console not UTF8 - Text utf8
         $this->adapter->setTestUtf8(false);
         $encodedText = $this->adapter->encodeText($text);
-        $this->assertEquals(utf8_decode($text), $encodedText);
+        $this->assertEquals(mb_convert_encoding($text, 'ISO-8859-1', 'UTF-8'), $encodedText);
 
         //Console not UTF8 - Text not utf8
-        $encodedText = $this->adapter->encodeText(utf8_decode($text));
-        $this->assertEquals(utf8_decode($text), $encodedText);
+        $encodedText = $this->adapter->encodeText(mb_convert_encoding($text, 'ISO-8859-1', 'UTF-8'));
+        $this->assertEquals(mb_convert_encoding($text, 'ISO-8859-1', 'UTF-8'), $encodedText);
     }
 
     public function testWriteTextBlockSameAsWidth()
@@ -186,30 +186,24 @@ class AbstractAdapterTest extends TestCase
         ob_get_clean();
     }
 
-    /**
-     * @expectedException \Laminas\Console\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Supplied X,Y coordinates are invalid.
-     */
     public function testInvalidCoords()
     {
+        $this->expectException('\Laminas\Console\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('Supplied X,Y coordinates are invalid.');
         $this->adapter->writeTextBlock('', 1, 1, -1, -9);
     }
 
-    /**
-     * @expectedException \Laminas\Console\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Invalid width supplied.
-     */
     public function testInvalidWidth()
     {
+        $this->expectException('\Laminas\Console\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('Invalid width supplied.');
         $this->adapter->writeTextBlock('', 0);
     }
 
-    /**
-     * @expectedException \Laminas\Console\Exception\InvalidArgumentException
-     * @expectedExceptionMessage Invalid height supplied.
-     */
     public function testInvalidHeight()
     {
+        $this->expectException('\Laminas\Console\Exception\InvalidArgumentException');
+        $this->expectExceptionMessage('Invalid height supplied.');
         $this->adapter->writeTextBlock('', 80, 0, 2, 2);
     }
 }

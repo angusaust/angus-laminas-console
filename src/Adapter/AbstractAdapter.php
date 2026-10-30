@@ -547,11 +547,17 @@ abstract class AbstractAdapter implements AdapterInterface
                 return $text;
             }
 
-            return utf8_encode($text);
+            return mb_convert_encoding($text, 'UTF-8', 'ISO-8859-1');
         }
 
         if (StringUtils::isValidUtf8($text)) {
-            return utf8_decode($text);
+            $substitute = mb_substitute_character();
+            try {
+                mb_substitute_character(0x3f);
+                return mb_convert_encoding($text, 'ISO-8859-1', 'UTF-8');
+            } finally {
+                mb_substitute_character($substitute);
+            }
         }
 
         return $text;

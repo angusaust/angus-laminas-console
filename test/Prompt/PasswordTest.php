@@ -11,7 +11,6 @@ namespace LaminasTest\Console\Prompt;
 use Laminas\Console\Adapter\AbstractAdapter;
 use Laminas\Console\Prompt\Password;
 use PHPUnit\Framework\TestCase;
-use Prophecy\Prophecy\ObjectProphecy;
 
 /**
  * Tests for {@see \Laminas\Console\Prompt\Password}
@@ -21,39 +20,39 @@ use Prophecy\Prophecy\ObjectProphecy;
 class PasswordTest extends TestCase
 {
     /**
-     * @var AbstractAdapter|ObjectProphecy
+     * @var AbstractAdapter|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $adapter;
 
-    public function setUp()
+    public function setUp(): void
     {
-        $this->adapter = $this->prophesize(AbstractAdapter::class);
+        $this->adapter = $this->createMock(AbstractAdapter::class);
     }
 
     public function testCanPromptPassword()
     {
-        $this->adapter->writeLine('Password: ')->shouldBeCalledTimes(1);
-        $this->adapter->readChar()->willReturn('f', 'o', 'o', PHP_EOL)->shouldBeCalledTimes(4);
-        $this->adapter->clearLine()->willReturn(null);
-        $this->adapter->write()->shouldNotBeCalled();
+        $this->adapter->expects($this->once())->method('writeLine')->with('Password: ');
+        $this->adapter->expects($this->exactly(4))->method('readChar')->willReturnOnConsecutiveCalls('f', 'o', 'o', PHP_EOL);
+        $this->adapter->method('clearLine')->willReturn(null);
+        $this->adapter->expects($this->never())->method('write');
 
         $char = new Password('Password: ');
 
-        $char->setConsole($this->adapter->reveal());
+        $char->setConsole($this->adapter);
 
         $this->assertEquals('foo', $char->show());
     }
 
     public function testCanPromptPasswordRepeatedly()
     {
-        $this->adapter->writeLine('New password? ')->shouldBeCalledTimes(2);
-        $this->adapter->readChar()->willReturn('b', 'a', 'r', PHP_EOL, 'b', 'a', 'z', PHP_EOL)->shouldBeCalledTimes(8);
-        $this->adapter->clearLine()->willReturn(null);
-        $this->adapter->write()->shouldNotBeCalled();
+        $this->adapter->expects($this->exactly(2))->method('writeLine')->with('New password? ');
+        $this->adapter->expects($this->exactly(8))->method('readChar')->willReturnOnConsecutiveCalls('b', 'a', 'r', PHP_EOL, 'b', 'a', 'z', PHP_EOL);
+        $this->adapter->method('clearLine')->willReturn(null);
+        $this->adapter->expects($this->never())->method('write');
 
         $char = new Password('New password? ');
 
-        $char->setConsole($this->adapter->reveal());
+        $char->setConsole($this->adapter);
 
         $this->assertEquals('bar', $char->show());
         $this->assertEquals('baz', $char->show());
@@ -61,16 +60,19 @@ class PasswordTest extends TestCase
 
     public function testProducesStarSymbolOnInput()
     {
-        $this->adapter->writeLine('New password? ')->shouldBeCalledTimes(1);
-        $this->adapter->readChar()->willReturn('t', 'a', 'b', PHP_EOL)->shouldBeCalledTimes(4);
-        $this->adapter->clearLine()->willReturn(null);
-        $this->adapter->write('*')->shouldBeCalledTimes(1);
-        $this->adapter->write('**')->shouldBeCalledTimes(1);
-        $this->adapter->write('***')->shouldBeCalledTimes(1);
+        $this->adapter->expects($this->once())->method('writeLine')->with('New password? ');
+        $this->adapter->expects($this->exactly(4))->method('readChar')->willReturnOnConsecutiveCalls('t', 'a', 'b', PHP_EOL);
+        $this->adapter->method('clearLine')->willReturn(null);
+        $expected = ['*', '**', '***'];
+        $this->adapter->expects($this->exactly(3))->method('write')->willReturnCallback(
+            function ($text) use (&$expected) {
+                $this->assertSame(array_shift($expected), $text);
+            }
+        );
 
         $char = new Password('New password? ', true);
 
-        $char->setConsole($this->adapter->reveal());
+        $char->setConsole($this->adapter);
 
         $this->assertSame('tab', $char->show());
     }

@@ -91,6 +91,8 @@ class Posix extends AbstractAdapter
      */
     protected $lastTTYMode = null;
 
+    public $modeResult;
+
     /**
      * Write a single line of text to console and advance cursor to the next line.
      *

@@ -45,6 +45,8 @@ class DefaultRouteMatcher implements RouteMatcherInterface
      */
     protected $filters = [];
 
+    public $constraints;
+
     /**
      * Class constructor
      *
